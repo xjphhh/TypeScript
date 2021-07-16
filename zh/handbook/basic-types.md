@@ -178,6 +178,9 @@ notSure.toFixed(); // okay, toFixed exists (but the compiler doesn't check)
 
 let prettySure: Object = 4;
 prettySure.toFixed(); // Error: Property 'toFixed' doesn't exist on type 'Object'.
+
+let obj: object = 4; // 不能将类型“number”分配给类型“object”。
+obj.toFixed(); // 不能将类型“number”分配给类型“object”。
 ```
 
 > 注意：应避免使用`Object`，而是使用非原始`object`类型，正如[Do's and Don'ts](../doc/handbook/declaration%20files/Do's%20and%20Don'ts.md)里所讲的那样。
