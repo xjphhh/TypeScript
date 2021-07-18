@@ -253,7 +253,8 @@ function infiniteLoop(): never {
 }
 ```
 
-## Object
+## object
+`TypeScript 2.2` 引入了被称为 `object` 类型的新类型，它用于表示**非原始类型**，在 JavaScript 中以下类型被视为原始类型：`string`、`boolean`、`number`、`bigint`、`symbol`、`null` 和 `undefined`。
 
 `object`表示非原始类型，也就是除`number`，`string`，`boolean`，`bigint`，`symbol`，`null`或`undefined`之外的类型。
 
@@ -270,6 +271,109 @@ create("string"); // Error
 create(false); // Error
 create(undefined); // Error
 ```
+
+## Object 
+
+TypeScript 定义了另一个与新的 `object` 类型几乎同名的类型，那就是 `Object` 类型。该类型是所有 Object 类的实例的类型。它由以下两个接口来定义：
+
+- Object 接口定义了 Object.prototype 原型对象上的属性；
+- ObjectConstructor 接口定义了 Object 类的属性。
+
+下面我们来看一下上述两个接口的相关定义：
+
+1、`Object` 接口定义
+
+```typescript
+// node_modules/typescript/lib/lib.es5.d.ts
+ 
+interface Object {
+  constructor: Function;
+  toString(): string;
+  toLocaleString(): string;
+  valueOf(): Object;
+  hasOwnProperty(v: PropertyKey): boolean;
+  isPrototypeOf(v: Object): boolean;
+  propertyIsEnumerable(v: PropertyKey): boolean;
+}
+```
+
+2、`ObjectConstructor` 接口定义
+
+```typescript
+// node_modules/typescript/lib/lib.es5.d.ts
+ 
+interface ObjectConstructor {
+  /** Invocation via `new` */
+  new(value?: any): Object;
+  /** Invocation via function calls */
+  (value?: any): any;
+ 
+  readonly prototype: Object;
+ 
+  getPrototypeOf(o: any): any;
+ 
+  // ···
+}
+ 
+declare var Object: ObjectConstructor;
+```
+
+Object 类的所有实例都继承了 Object 接口中的所有属性。我们可以看到，如果我们创建一个返回其参数的函数：传入一个 Object 对象的实例，它总是会满足该函数的返回类型 —— 即要求返回值包含一个 toString() 方法。
+
+```typescript
+// Object: Provides functionality common to all JavaScript objects.
+function f(x: Object): { toString(): string } {
+  return x; // OK
+}
+```
+
+## Object vs object
+
+- `object` 类型，它用于表示非原始类型（undefined, null, boolean, number, bigint, string, symbol），不包括原始值。使用这种类型，我们不能访问值的任何属性。
+
+ ```typescript
+  function func2(x: object) { }
+   
+  // Argument of type '"semlinker"' is not assignable to parameter of type 'object'.(2345)
+  func2('semlinker'); // Error
+ ```
+
+- 有趣的是，类型 `Object` 包括原始值，因为`Object.prototype` 的属性也可以通过原始值访问：
+
+```typescript
+function func1(x: Object) { }
+func1('semlinker'); // OK
+> 'semlinker'.hasOwnProperty === Object.prototype.hasOwnProperty //true
+```
+
+- 当对 `Object` 类型的变量进行赋值时，如果赋值的对象的属性与 Object 接口中的属性冲突（即不符合Object 接口中的属性用法），则 TypeScript 编译器会提示相应的错误：
+
+  ```typescript
+  // 不能将类型“() => number”分配给类型“() => string”。
+  // 不能将类型“number”分配给类型“string”。
+  const obj1: Object = { 
+     toString() { return 123 } // Error
+  }; 
+  ```
+
+  对于 `object` 类型来说，TypeScript 编译器不会提示任何错误：
+
+  ```typescript
+  const obj2: object = { 
+    toString() { return 123 } 
+  };
+  ```
+
+- 在处理 object 类型和字符串索引对象类型的赋值操作时，也要特别注意：
+
+  ```typescript
+  let strictTypeHeaders: { [key: string]: string } = {};
+  let header: object = {};
+  header = strictTypeHeaders; // OK
+  strictTypeHeaders = header; // Error Type 'object' is not assignable to type '{ [key: string]: string; }'.
+  ```
+
+  在上述代码中，最后一行会出现编译错误，这是因为 `{ [key: string]: string }` 类型相比 `object` 类型更加精确。而 `header = strictTypeHeaders;` 这一行却没有提示任何错误，是因为这两种类型都是非基本类型，`object` 类型比 `{ [key: string]: string }` 类型更加通用。
 
 ## 类型断言
 
@@ -321,4 +425,3 @@ function reverse(s: string): string {
 
 reverse("hello world");
 ```
-
